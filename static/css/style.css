@@ -6,11 +6,14 @@
     --accent-color: #3498db;
     --light-text: #ecf0f1;
     --dark-text: #34495e;
+    --card-bg: #ffffff;
+    --body-bg: #f4f7f9;
+    --border-color: #e1e4e8;
 }
 
 body {
     font-family: 'Hind Siliguri', sans-serif;
-    background-color: #f4f7f9;
+    background-color: var(--body-bg);
     color: var(--dark-text);
     margin: 0;
     line-height: 1.6;
@@ -30,35 +33,12 @@ body {
     display: flex;
     flex-direction: column;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-}
-
-.sidebar-header {
-    text-align: center;
-    border-bottom: 1px solid var(--secondary-color);
-    padding-bottom: 20px;
-    margin-bottom: 20px;
+    position: fixed;
+    height: 100%;
 }
 
 .sidebar-header h3 {
-    margin: 0;
-    font-size: 1.5em;
     color: var(--accent-color);
-}
-
-.sidebar-header p {
-    margin: 5px 0 0;
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-
-.prayer-times-list .prayer-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 10px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    background-color: var(--secondary-color);
-    font-size: 1.1em;
 }
 
 .prayer-times-list .prayer-item.current {
@@ -66,98 +46,51 @@ body {
     font-weight: bold;
 }
 
-.prayer-times-list .prayer-name {
-    font-weight: 500;
-}
-
-.countdown-timer {
-    margin-top: auto;
-    text-align: center;
-    background-color: var(--secondary-color);
-    padding: 20px;
-    border-radius: 8px;
-}
-
-#countdown {
-    font-size: 2.5em;
-    font-weight: bold;
+.countdown-timer #countdown {
     color: var(--accent-color);
-    letter-spacing: 2px;
 }
 
-#next-prayer-name {
-    margin-top: 5px;
-    font-size: 1.1em;
-}
-
-.sidebar-footer {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.8em;
-    opacity: 0.6;
-}
+/* Other sidebar styles from previous steps remain the same */
+.sidebar-header { text-align: center; border-bottom: 1px solid var(--secondary-color); padding-bottom: 20px; margin-bottom: 20px; }
+.sidebar-header p { margin: 5px 0 0; font-size: 0.9em; opacity: 0.8; }
+.prayer-times-list .prayer-item { display: flex; justify-content: space-between; padding: 12px 10px; border-radius: 6px; margin-bottom: 8px; background-color: var(--secondary-color); font-size: 1.1em; }
+.prayer-times-list .prayer-name { font-weight: 500; }
+.countdown-timer { margin-top: auto; text-align: center; background-color: var(--secondary-color); padding: 20px; border-radius: 8px; }
+#countdown { font-size: 2.5em; font-weight: bold; letter-spacing: 2px; }
+#next-prayer-name { margin-top: 5px; font-size: 1.1em; }
+.sidebar-footer { text-align: center; margin-top: 20px; font-size: 0.8em; opacity: 0.6; }
 
 
 /* ================== Main Content Styles ================== */
 .main-container {
     flex: 1;
     padding: 25px;
-    overflow-y: auto;
+    margin-left: var(--sidebar-width); /* Push content to the right of the sidebar */
 }
 
 .container {
     max-width: 800px;
     margin: 0 auto;
-    background: none;
-    box-shadow: none;
-    padding: 0;
 }
 
 .header {
-    background: white;
+    background: var(--card-bg);
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 25px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     position: relative;
 }
-
-.header h1 {
-    margin: 0;
-    font-size: 1.8em;
-    color: var(--dark-text);
-}
-
-.header p {
-    margin: 5px 0 0;
-    color: #666;
-}
-
-.login-btn, .logout-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: var(--accent-color);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background-color 0.3s;
-}
-
-.logout-btn {
-    background-color: #e74c3c;
-}
-
-.login-btn:hover, .logout-btn:hover {
-    opacity: 0.9;
-}
+/* Other header styles remain */
+.header h1 { margin: 0; font-size: 1.8em; color: var(--dark-text); }
+.header p { margin: 5px 0 0; color: #666; }
+.login-btn, .logout-btn { position: absolute; top: 20px; right: 20px; background-color: var(--accent-color); color: white; padding: 8px 15px; border-radius: 6px; text-decoration: none; font-weight: 500; transition: background-color 0.3s; }
+.logout-btn { background-color: #e74c3c; }
 
 
 .card {
-    background-color: #ffffff;
-    border: 1px solid #e1e4e8;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 25px;
     margin-bottom: 25px;
@@ -170,18 +103,44 @@ body {
     border-bottom: 2px solid #eee;
     padding-bottom: 10px;
 }
-
-.update-form h3 {
-    margin-top: 20px;
-    border-top: 1px solid #eee;
-    padding-top: 20px;
+.card h4 {
+    color: var(--secondary-color);
+    margin-bottom: 10px;
 }
 
-.form-group {
-    margin-bottom: 15px;
+
+/* ================== NEW GRID STYLES ================== */
+
+.prayer-summary-grid, .prayer-input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
 }
 
-.form-group label, .calculator label {
+.prayer-summary-item, .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.prayer-summary-item {
+    background-color: #f6f8fa;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+.prayer-summary-item .prayer-label {
+    font-weight: 600;
+    font-size: 1em;
+    color: var(--secondary-color);
+}
+.prayer-summary-item .prayer-count {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: 600;
@@ -192,10 +151,13 @@ body {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    box-sizing: border-box; /* Important for width 100% */
+    box-sizing: border-box; 
+    text-align: center;
 }
 
-#update-kaza-btn, #calculate-btn, #save-initial-btn {
+/* ================== Button and Setup Section Styles ================== */
+
+#update-kaza-btn, #calculate-btn, #save-manual-btn, #auto-calc-result button {
     width: 100%;
     padding: 12px;
     background-color: var(--accent-color);
@@ -205,9 +167,22 @@ body {
     font-size: 1.1em;
     cursor: pointer;
     transition: background-color 0.3s;
+    margin-top: 15px;
 }
 
-/* Log Table Styles */
+.setup-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+    margin-top: 20px;
+}
+.setup-section:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+
+/* ================== Log Table Styles ================== */
 .log-container {
     max-height: 300px;
     overflow-y: auto;
@@ -219,11 +194,14 @@ body {
 
 #kaza-log-table th, #kaza-log-table td {
     padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #e1e4e8;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
 }
 
 #kaza-log-table th {
     background-color: #f6f8fa;
     font-weight: 600;
+    position: sticky;
+    top: 0;
 }
+

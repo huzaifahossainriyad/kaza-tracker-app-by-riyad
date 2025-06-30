@@ -1,193 +1,262 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements for Kaza Tracker
+    // Prayer names constant for easy access
+    const PRAYER_NAMES = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Witr"];
+    const PRAYER_NAMES_BN = { Fajr: 'ফজর', Dhuhr: 'যোহর', Asr: 'আসর', Maghrib: 'মাগরিব', Isha: 'ইশা', Witr: 'বিতর' };
+
+    // --- DOM Element Selections ---
     const summaryDisplay = document.getElementById('summary-display');
-    const waqtCompletedInput = document.getElementById('waqt-completed');
-    const noteInput = document.getElementById('note');
+    const dailyUpdateForm = document.getElementById('daily-update-form');
+    const dailyNoteInput = document.getElementById('daily-note');
     const updateKazaBtn = document.getElementById('update-kaza-btn');
     const kazaLogTableBody = document.querySelector('#kaza-log-table tbody');
-    const birthdateInput = document.getElementById('birthdate');
-    const balighAgeSelect = document.getElementById('baligh-age');
-    const calculateBtn = document.getElementById('calculate-btn');
-    const initialResultDiv = document.getElementById('initial-result');
     
-    // DOM Elements for Prayer Times
+    // Auto calculator elements
+    const birthdateInput = document.getElementById('birthdate');
+    const balighAgeInput = document.getElementById('baligh-age');
+    const calculateBtn = document.getElementById('calculate-btn');
+    const autoCalcResultDiv = document.getElementById('auto-calc-result');
+
+    // Manual setup elements
+    const manualSetupForm = document.getElementById('manual-setup-form');
+    const saveManualBtn = document.getElementById('save-manual-btn');
+    
+    // Prayer time elements
     const prayerTimesListDiv = document.getElementById('prayer-times-list');
     const countdownDiv = document.getElementById('countdown');
     const nextPrayerNameDiv = document.getElementById('next-prayer-name');
-
-    // Global variables
-    let kazaLog = [];
-    let currentRemaining = 0;
-    let prayerTimes = {};
+    
+    // Global state
     let countdownInterval;
 
-    // ==========================================================
-    // ############ PRAYER TIME FUNCTIONS (NEW) ############
-    // ==========================================================
-
-    const fetchPrayerTimes = async () => {
-        try {
-            const response = await fetch('/get_prayer_times');
-            const result = await response.json();
-            if (result.code === 200) {
-                prayerTimes = result.data.timings;
-                displayPrayerTimes();
-                startCountdown();
-            } else {
-                prayerTimesListDiv.innerHTML = `<p class="error-text">নামাজের সময় আনতে সমস্যা হয়েছে।</p>`;
-            }
-        } catch (error) {
-            console.error("Error fetching prayer times:", error);
-            prayerTimesListDiv.innerHTML = `<p class="error-text">সার্ভার থেকে নামাজের সময় আনা সম্ভব হয়নি।</p>`;
-        }
-    };
-
-    const displayPrayerTimes = () => {
-        const prayerOrder = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-        const prayerNamesBN = {'Fajr': 'ফজর', 'Dhuhr': 'যোহর', 'Asr': 'আসর', 'Maghrib': 'মাগরিব', 'Isha': 'ইশা'};
-        
-        prayerTimesListDiv.innerHTML = ''; // Clear loading text
-        prayerOrder.forEach(name => {
-            const time = prayerTimes[name];
-            const item = document.createElement('div');
-            item.className = 'prayer-item';
-            item.id = `prayer-${name}`;
-            item.innerHTML = `<span class="prayer-name">${prayerNamesBN[name]}</span> <span class="prayer-time">${time}</span>`;
-            prayerTimesListDiv.appendChild(item);
-        });
-    };
-    
-    const startCountdown = () => {
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        countdownInterval = setInterval(() => {
-            const prayerOrder = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-            const prayerNamesBN = {'Fajr': 'ফজর', 'Dhuhr': 'যোহর', 'Asr': 'আসর', 'Maghrib': 'মাগরিব', 'Isha': 'ইশা'};
-            const now = new Date();
-            let nextPrayerTime = null;
-            let nextPrayerName = '';
-
-            for (const prayer of prayerOrder) {
-                const [hour, minute] = prayerTimes[prayer].split(':');
-                const prayerTimeToday = new Date();
-                prayerTimeToday.setHours(parseInt(hour), parseInt(minute), 0, 0);
-
-                if (prayerTimeToday > now) {
-                    nextPrayerTime = prayerTimeToday;
-                    nextPrayerName = prayer;
-                    break;
-                }
-            }
-            
-            // If all prayers for today are done, next prayer is Fajr tomorrow
-            if (!nextPrayerTime) {
-                const [hour, minute] = prayerTimes['Fajr'].split(':');
-                const fajrTomorrow = new Date();
-                fajrTomorrow.setDate(fajrTomorrow.getDate() + 1);
-                fajrTomorrow.setHours(parseInt(hour), parseInt(minute), 0, 0);
-                nextPrayerTime = fajrTomorrow;
-                nextPrayerName = 'Fajr';
-            }
-
-            const diff = nextPrayerTime - now;
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            countdownDiv.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            nextPrayerNameDiv.textContent = prayerNamesBN[nextPrayerName];
-            
-            // Highlight current prayer
-            document.querySelectorAll('.prayer-item').forEach(item => item.classList.remove('current'));
-            const currentPrayerItem = document.getElementById(`prayer-${nextPrayerName}`);
-            if(currentPrayerItem) currentPrayerItem.classList.add('current');
-
-        }, 1000);
-    };
-
-    // ==========================================================
-    // ############ KAZA TRACKER FUNCTIONS (EXISTING) ############
-    // ==========================================================
+    // --- Kaza Data Management ---
 
     const loadKazaData = async () => {
         try {
             const response = await fetch('/get_kaza_data');
             const result = await response.json();
-            if (result.status === 'success' && result.data.length > 0) {
-                kazaLog = result.data;
-                const lastEntry = kazaLog[kazaLog.length - 1];
-                currentRemaining = lastEntry['Remaining After'];
-                updateSummary();
-                populateLogTable();
-            } else {
-                summaryDisplay.innerHTML = '<p>কোনো হিসাব পাওয়া যায়নি। অনুগ্রহ করে প্রাথমিক হিসাব করুন।</p>';
+
+            if (result.status !== 'success') {
+                throw new Error(result.message);
             }
+
+            const logs = result.data;
+            const currentTotals = calculateCurrentTotals(logs);
+
+            displaySummary(currentTotals);
+            populateLogTable(logs);
+            
         } catch (error) {
             console.error('Error fetching Kaza data:', error);
+            summaryDisplay.innerHTML = `<p style="color: red;">ডেটা লোড করতে সমস্যা হয়েছে।</p>`;
         }
     };
 
-    const updateSummary = () => {
-        summaryDisplay.innerHTML = `<p>আপনার মোট বাকি কাজা নামাজ: <strong>${currentRemaining} ওয়াক্ত</strong></p>`;
+    const calculateCurrentTotals = (logs) => {
+        const totals = { Fajr: 0, Dhuhr: 0, Asr: 0, Maghrib: 0, Isha: 0, Witr: 0 };
+        if (!logs || logs.length === 0) {
+            return totals;
+        }
+        
+        // Sum up all entries for each prayer
+        logs.forEach(log => {
+            PRAYER_NAMES.forEach(prayer => {
+                totals[prayer] += Number(log[prayer]) || 0;
+            });
+        });
+        return totals;
     };
 
-    const populateLogTable = () => {
-        kazaLogTableBody.innerHTML = '';
-        for (let i = kazaLog.length - 1; i >= 0; i--) {
-            const entry = kazaLog[i];
-            kazaLogTableBody.innerHTML += `<tr><td>${entry.Date}</td><td>${entry['Prayers Completed']}</td><td>${entry['Remaining After']}</td><td>${entry.Note}</td></tr>`;
+    const displaySummary = (totals) => {
+        summaryDisplay.innerHTML = ''; // Clear loading text
+        if (Object.values(totals).every(v => v === 0)) {
+             summaryDisplay.innerHTML = '<p>কোনো হিসাব পাওয়া যায়নি। অনুগ্রহ করে নিচে থেকে প্রাথমিক হিসাব সেটআপ করুন।</p>';
+             return;
         }
+        PRAYER_NAMES.forEach(prayer => {
+            const item = `
+                <div class="prayer-summary-item">
+                    <span class="prayer-label">${PRAYER_NAMES_BN[prayer]}</span>
+                    <span class="prayer-count">${totals[prayer]}</span>
+                </div>`;
+            summaryDisplay.innerHTML += item;
+        });
     };
     
+    const populateLogTable = (logs) => {
+        kazaLogTableBody.innerHTML = '';
+        // Show logs in reverse order (newest first)
+        [...logs].reverse().forEach(log => {
+            const row = `<tr>
+                <td>${log.Date}</td>
+                <td>${log.Note}</td>
+                <td>${log.Fajr}</td>
+                <td>${log.Dhuhr}</td>
+                <td>${log.Asr}</td>
+                <td>${log.Maghrib}</td>
+                <td>${log.Isha}</td>
+                <td>${log.Witr}</td>
+            </tr>`;
+            kazaLogTableBody.innerHTML += row;
+        });
+    };
+
     const saveData = async (dataToSave) => {
         try {
             const response = await fetch('/save_kaza_data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSave) });
             const result = await response.json();
+            
             if (result.status === 'success') {
                 alert('আপনার হিসাব সফলভাবে গুগল শীটে সেভ হয়েছে।');
-                loadKazaData();
+                loadKazaData(); // Reload all data to reflect changes
             } else {
                 alert(`ডেটা সেভ করতে সমস্যা হয়েছে: ${result.message}`);
             }
         } catch (error) {
             console.error('Error saving data:', error);
+            alert('সার্ভারের সাথে সংযোগ করতে সমস্যা হয়েছে।');
         }
     };
-    
+
+    // --- Event Handlers ---
+
     calculateBtn.addEventListener('click', () => {
         const birthdate = new Date(birthdateInput.value);
-        if (isNaN(birthdate.getTime())) { alert('দয়া করে একটি সঠিক জন্ম তারিখ দিন।'); return; }
-        const balighAge = parseInt(balighAgeSelect.value);
-        const balighDate = new Date(birthdate);
-        balighDate.setFullYear(birthdate.getFullYear() + balighAge);
-        const today = new Date();
-        if (balighDate > today) { alert('আলহামদুলিল্লাহ, আপনার এখনো নামাজ ফরয হওয়ার বয়স হয়নি।'); return; }
-        const totalWaqt = Math.ceil(Math.abs(today - balighDate) / (1000 * 60 * 60 * 24)) * 5;
-        initialResultDiv.innerHTML = `<p>আপনার মোট কাজা প্রায়: <strong>${totalWaqt} ওয়াক্ত</strong></p><button id="save-initial-btn" data-waqt="${totalWaqt}">এই হিসাবটি সেভ করুন</button>`;
-        initialResultDiv.style.display = 'block';
-    });
+        const balighAge = parseFloat(balighAgeInput.value);
 
-    document.addEventListener('click', (event) => {
-        if (event.target && event.target.id === 'save-initial-btn') {
-            if (kazaLog.length > 0 && !confirm("আপনার ইতোমধ্যে একটি হিসাব আছে। আপনি কি নতুন করে শুরু করতে চান?")) return;
-            const data = { date: new Date().toLocaleDateString('bn-BD'), completed: 0, remaining: parseInt(event.target.dataset.waqt), note: 'প্রাথমিক হিসাব' };
-            saveData(data);
+        if (isNaN(birthdate.getTime()) || isNaN(balighAge) || balighAge < 7 || balighAge > 15) {
+            alert('অনুগ্রহ করে সঠিক জন্ম তারিখ এবং ৭ থেকে ১৫ এর মধ্যে বয়স দিন।');
+            return;
         }
+
+        const balighDate = new Date(birthdate);
+        balighDate.setFullYear(birthdate.getFullYear() + Math.floor(balighAge));
+        balighDate.setMonth(birthdate.getMonth() + (balighAge % 1) * 12);
+
+        const today = new Date();
+        if (balighDate > today) {
+            alert('আলহামদুলিল্লাহ, আপনার এখনো নামাজ ফরয হওয়ার বয়স হয়নি।');
+            return;
+        }
+
+        const totalDays = Math.ceil(Math.abs(today - balighDate) / (1000 * 60 * 60 * 24));
+        const totalWaqt = { Fajr: totalDays, Dhuhr: totalDays, Asr: totalDays, Maghrib: totalDays, Isha: totalDays, Witr: totalDays };
+
+        autoCalcResultDiv.innerHTML = '';
+        PRAYER_NAMES.forEach(prayer => {
+            autoCalcResultDiv.innerHTML += `
+                <div class="prayer-summary-item">
+                    <span class="prayer-label">${PRAYER_NAMES_BN[prayer]}</span>
+                    <span class="prayer-count">${totalWaqt[prayer]}</span>
+                </div>`;
+        });
+        
+        const saveButton = document.createElement('button');
+        saveButton.id = 'save-auto-calc-btn';
+        saveButton.textContent = 'এই স্বয়ংক্রিয় হিসাব সেভ করুন';
+        autoCalcResultDiv.appendChild(saveButton);
+        autoCalcResultDiv.style.display = 'grid';
+        
+        saveButton.addEventListener('click', () => {
+            const dataToSave = { ...totalWaqt, date: new Date().toLocaleDateString('bn-BD'), note: `স্বয়ংক্রিয় হিসাব (${balighAge} বছর)` };
+            saveData(dataToSave);
+        });
+    });
+    
+    saveManualBtn.addEventListener('click', () => {
+        const dataToSave = { date: new Date().toLocaleDateString('bn-BD'), note: 'ম্যানুয়াল প্রাথমিক হিসাব' };
+        let total = 0;
+        manualSetupForm.querySelectorAll('input').forEach(input => {
+            const prayer = input.dataset.prayer;
+            const value = parseInt(input.value) || 0;
+            dataToSave[prayer] = value;
+            total += value;
+        });
+
+        if (total === 0) {
+            alert('অনুগ্রহ করে অন্তত একটি নামাজের সংখ্যা লিখুন।');
+            return;
+        }
+        saveData(dataToSave);
     });
 
     updateKazaBtn.addEventListener('click', () => {
-        const completed = parseInt(waqtCompletedInput.value);
-        if (isNaN(completed) || completed <= 0) { alert('দয়া করে আদায় করা নামাজের সঠিক সংখ্যা দিন।'); return; }
-        if (currentRemaining < completed && !confirm(`আপনার বাকি আছে ${currentRemaining} ওয়াক্ত, কিন্তু আপনি ${completed} ওয়াক্ত লিখেছেন। হিসাব কি সম্পন্ন হয়ে গেছে?`)) return;
-        const data = { date: new Date().toLocaleDateString('bn-BD'), completed: completed, remaining: Math.max(0, currentRemaining - completed), note: noteInput.value };
-        saveData(data);
-        waqtCompletedInput.value = '';
-        noteInput.value = '';
+        const dataToSave = { date: new Date().toLocaleDateString('bn-BD'), note: dailyNoteInput.value || 'দৈনিক আদায়' };
+        let total = 0;
+        dailyUpdateForm.querySelectorAll('input').forEach(input => {
+            const prayer = input.dataset.prayer;
+            // Daily updates are saved as negative numbers
+            const value = (parseInt(input.value) || 0) * -1;
+            dataToSave[prayer] = value;
+            total += value;
+        });
+
+        if (total === 0) {
+            alert('অনুগ্রহ করে অন্তত একটি আদায় করা নামাজের সংখ্যা লিখুন।');
+            return;
+        }
+        saveData(dataToSave);
+        // Clear inputs after submission
+        dailyUpdateForm.querySelectorAll('input').forEach(input => input.value = '');
+        dailyNoteInput.value = '';
     });
 
-    // ==========================================================
-    // ############ INITIAL FUNCTION CALLS ############
-    // ==========================================================
+
+    // --- Prayer Time Functions (from previous step) ---
+    const fetchPrayerTimes = async () => {
+        try {
+            const response = await fetch('/get_prayer_times');
+            const result = await response.json();
+            if (result.code === 200) {
+                const prayerTimes = result.data.timings;
+                displayPrayerTimes(prayerTimes);
+                startCountdown(prayerTimes);
+            }
+        } catch (error) {
+            console.error("Error fetching prayer times:", error);
+        }
+    };
+    const displayPrayerTimes = (times) => {
+        prayerTimesListDiv.innerHTML = '';
+        ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].forEach(name => {
+            prayerTimesListDiv.innerHTML += `<div class="prayer-item" id="prayer-${name}"><span class="prayer-name">${PRAYER_NAMES_BN[name]}</span> <span class="prayer-time">${times[name]}</span></div>`;
+        });
+    };
+    const startCountdown = (times) => {
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
+            const now = new Date();
+            let nextPrayerTime, nextPrayerName;
+            for (const prayer of ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']) {
+                const [h, m] = times[prayer].split(':');
+                const pTime = new Date();
+                pTime.setHours(parseInt(h), parseInt(m), 0, 0);
+                if (pTime > now) {
+                    nextPrayerTime = pTime;
+                    nextPrayerName = prayer;
+                    break;
+                }
+            }
+            if (!nextPrayerTime) {
+                const [h, m] = times['Fajr'].split(':');
+                const pTime = new Date();
+                pTime.setDate(pTime.getDate() + 1);
+                pTime.setHours(parseInt(h), parseInt(m), 0, 0);
+                nextPrayerTime = pTime;
+                nextPrayerName = 'Fajr';
+            }
+            const diff = nextPrayerTime - now;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            countdownDiv.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            nextPrayerNameDiv.textContent = PRAYER_NAMES_BN[nextPrayerName];
+            document.querySelectorAll('.prayer-item').forEach(i => i.classList.remove('current'));
+            document.getElementById(`prayer-${nextPrayerName}`)?.classList.add('current');
+        }, 1000);
+    };
+
+    // --- Initial Function Calls ---
     loadKazaData();
     fetchPrayerTimes();
 });
+
