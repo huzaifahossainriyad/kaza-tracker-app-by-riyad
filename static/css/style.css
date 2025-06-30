@@ -1,0 +1,107 @@
+body {
+    font-family: 'Hind Siliguri', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    background-color: #ffffff;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px_12px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    color: #1a73e8;
+    margin: 0;
+    font-size: 1.8em;
+}
+
+.header p {
+    margin: 5px 0 0;
+    font-size: 1.1em;
+    color: #555;
+}
+
+.card {
+    background-color: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card h2 {
+    color: #333;
+    border-bottom: 2px solid #1a73e8;
+    padding-bottom: 10px;
+    margin-top: 0;
+    font-size: 1.4em;
+}
+
+.calculator {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.calculator label {
+    font-weight: 600;
+}
+
+.calculator input[type="date"],
+.calculator select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
+    font-family: 'Hind Siliguri', sans-serif;
+}
+
+.calculator button {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.calculator button:hover {
+    background-color: #155ab6;
+}
+
+#result-card {
+    border-color: #1a73e8;
+}
+
+#result {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #e3f2fd;
+    border-left: 5px solid #1a73e8;
+    border-radius: 5px;
+}
+#result p {
+    margin: 8px 0;
+    font-size: 1.1em;
+}

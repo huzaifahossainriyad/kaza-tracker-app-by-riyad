@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ইসলামিক বয়স ক্যালকুলেটর</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>ইসলামিক বয়স ও কাজা নামাজ ক্যালকুলেটর</h1>
+            <p>আপনার জীবনের পার হওয়া নামাজের ওয়াক্ত হিসাব করুন সহজে</p>
+        </header>
+
+        <main class="main-content">
+            <div class="card">
+                <h2>বয়স হিসাব করুন</h2>
+                <div class="calculator">
+                    <label for="birthdate">আপনার জন্ম তারিখ দিন:</label>
+                    <input type="date" id="birthdate" name="birthdate">
+                    
+                    <label for="baligh-age">বালেগ হওয়ার বয়স ধরুন:</label>
+                    <select id="baligh-age">
+                        <option value="12">১২ বছর</option>
+                        <option value="13">১৩ বছর</option>
+                        <option value="14">১৪ বছর</option>
+                        <option value="15" selected>১৫ বছর (সাধারণত)</option>
+                    </select>
+
+                    <button id="calculate-btn">হিসাব করুন</button>
+                </div>
+            </div>
+
+            <div class="card" id="result-card" style="display: none;">
+                <h2>আপনার আনুমানিক হিসাব</h2>
+                <div id="result">
+                    </div>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
