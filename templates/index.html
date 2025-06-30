@@ -10,10 +10,18 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>ইসলামিক বয়স ও কাজা নামাজ ক্যালকুলেটর</h1>
-            <p>আপনার জীবনের পার হওয়া নামাজের ওয়াক্ত হিসাব করুন সহজে</p>
+            {% if 'credentials' in session %}
+                <h1>আসসালামু আলাইকুম</h1>
+                <p>আপনার কাজা নামাজের হিসাব রাখুন সহজে</p>
+                <a href="{{ url_for('logout') }}" class="logout-btn">লগআউট</a>
+            
+            {% else %}
+                <h1>কাজা নামাজ ট্র্যাকার</h1>
+                <a href="{{ url_for('login') }}" class="login-btn">গুগল দিয়ে লগইন করুন</a>
+            {% endif %}
         </header>
 
+        {% if 'credentials' in session %}
         <main class="main-content">
             <div class="card">
                 <h2>বয়স হিসাব করুন</h2>
@@ -35,11 +43,14 @@
 
             <div class="card" id="result-card" style="display: none;">
                 <h2>আপনার আনুমানিক হিসাব</h2>
-                <div id="result">
-                    </div>
+                <div id="result"></div>
             </div>
         </main>
+        {% endif %}
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    {% if 'credentials' in session %}
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% endif %}
 </body>
 </html>
