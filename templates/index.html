@@ -3,48 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ইসলামিক বয়স ক্যালকুলেটর</title>
+    <title>কাজা নামাজ ট্র্যাকার</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header class="header">
+            {% if session.get('user_name') %}
+                <h1>আসসালামু আলাইকুম, {{ session.get('user_name') }}</h1>
+            {% else %}
+                 <h1>কাজা নামাজ ট্র্যাকার</h1>
+            {% endif %}
+
             {% if 'credentials' in session %}
-                <h1>আসসালামু আলাইকুম</h1>
                 <p>আপনার কাজা নামাজের হিসাব রাখুন সহজে</p>
                 <a href="{{ url_for('logout') }}" class="logout-btn">লগআউট</a>
-            
             {% else %}
-                <h1>কাজা নামাজ ট্র্যাকার</h1>
                 <a href="{{ url_for('login') }}" class="login-btn">গুগল দিয়ে লগইন করুন</a>
             {% endif %}
         </header>
 
         {% if 'credentials' in session %}
         <main class="main-content">
+
+            <!-- সেভ করা ডেটা দেখানোর সেকশন -->
+            <div class="card" id="saved-data-card">
+                <h2>আপনার বর্তমান হিসাব</h2>
+                <div id="summary-display">
+                    <p>লোড হচ্ছে...</p>
+                </div>
+                <div class="update-form">
+                    <h3>নতুন আদায় করা নামাজ যোগ করুন</h3>
+                    <div class="form-group">
+                        <label for="waqt-completed">কত ওয়াক্ত আদায় করেছেন?</label>
+                        <input type="number" id="waqt-completed" min="1" placeholder="সংখ্যা দিন">
+                    </div>
+                     <div class="form-group">
+                        <label for="note">কোনো নোট (ঐচ্ছিক)</label>
+                        <input type="text" id="note" placeholder="যেমন: আজকের যোহর ও আসর">
+                    </div>
+                    <button id="update-kaza-btn">হিসাব আপডেট করুন</button>
+                </div>
+            </div>
+            
+            <!-- বিস্তারিত লগ টেবিল -->
             <div class="card">
-                <h2>বয়স হিসাব করুন</h2>
+                <h2>বিস্তারিত লগ</h2>
+                <div class="log-container">
+                    <table id="kaza-log-table">
+                        <thead>
+                            <tr>
+                                <th>তারিখ</th>
+                                <th>আদায় হয়েছে</th>
+                                <th>বাকি</th>
+                                <th>নোট</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- জাভাস্ক্রিপ্ট দিয়ে ডেটা এখানে যোগ করা হবে -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- নতুন করে হিসাব করার সেকশন -->
+            <div class="card">
+                <h2>প্রাথমিক হিসাব (শুধুমাত্র প্রথমবার)</h2>
+                <p>যদি আপনার কোনো হিসাব আগে থেকে সেভ করা না থাকে, তাহলে এখান থেকে শুরু করুন।</p>
                 <div class="calculator">
                     <label for="birthdate">আপনার জন্ম তারিখ দিন:</label>
                     <input type="date" id="birthdate" name="birthdate">
                     
                     <label for="baligh-age">বালেগ হওয়ার বয়স ধরুন:</label>
                     <select id="baligh-age">
-                        <option value="12">১২ বছর</option>
-                        <option value="13">১৩ বছর</option>
+                        <option value="15" selected>১৫ বছর</option>
                         <option value="14">১৪ বছর</option>
-                        <option value="15" selected>১৫ বছর (সাধারণত)</option>
+                        <option value="11">১১ বছর</option>
+                        <option value="10">১0 বছর</option>
                     </select>
 
-                    <button id="calculate-btn">হিসাব করুন</button>
+                    <button id="calculate-btn">মোট কাজা হিসাব করুন</button>
+                    
+                    <div id="initial-result" style="display: none; margin-top: 15px;">
+                        <!-- প্রাথমিক হিসাব এখানে দেখানো হবে -->
+                    </div>
                 </div>
             </div>
 
-            <div class="card" id="result-card" style="display: none;">
-                <h2>আপনার আনুমানিক হিসাব</h2>
-                <div id="result"></div>
-            </div>
         </main>
         {% endif %}
     </div>

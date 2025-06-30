@@ -1,13 +1,14 @@
 import os
 import json
-from flask import Flask, redirect, url_for, session, request, render_template
+import gspread
+from flask import Flask, redirect, url_for, session, request, render_template, jsonify
+from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 
-# এই লাইনটি লোকাল কম্পিউটারে টেস্টিং এর জন্য খুবই জরুরি
+# লোকাল কম্পিউটারে টেস্টিং এর জন্য
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
-# একটি শক্তিশালী এবং ইউনিক সিক্রেট কী ব্যবহার করা হলো
 app.secret_key = 'kaza-tracker-riyad-huzaifa-super-secret-key'
 
 # Google API এর জন্য স্কোপ
@@ -17,15 +18,66 @@ SCOPES = ['https://www.googleapis.com/auth/drive.file',
           'openid',
           'https://www.googleapis.com/auth/spreadsheets']
 
+# --- Helper Functions ---
+
+def credentials_to_dict(credentials):
+  """Helper function to convert credentials to a JSON serializable dict."""
+  return {'token': credentials.token,
+          'refresh_token': credentials.refresh_token,
+          'token_uri': credentials.token_uri,
+          'client_id': credentials.client_id,
+          'client_secret': credentials.client_secret,
+          'scopes': credentials.scopes}
+
+def get_gspread_client():
+    """সেশনে থাকা ক্রেডেনশিয়াল ব্যবহার করে gspread ক্লায়েন্ট অথোরাইজ করে।"""
+    if 'credentials' not in session:
+        return None
+    
+    creds_dict = session['credentials']
+    creds = Credentials.from_authorized_user_info(creds_dict)
+    
+    # gspread কে অথোরাইজ করা
+    gc = gspread.authorize(creds)
+    
+    # ক্রেডেনশিয়াল রিফ্রেশ হলে সেশনে আপডেট করা
+    session['credentials'] = credentials_to_dict(creds)
+    
+    return gc
+
+def get_worksheet():
+    """Kaza Tracker Data নামে স্প্রেডশীট খুঁজে বের করে বা তৈরি করে এবং ওয়ার্কশীট রিটার্ন করে।"""
+    gc = get_gspread_client()
+    if not gc:
+        return None
+        
+    spreadsheet_title = "Kaza Tracker Data"
+    try:
+        # স্প্রেডশীটটি খোঁজা হচ্ছে
+        sh = gc.open(spreadsheet_title)
+    except gspread.exceptions.SpreadsheetNotFound:
+        # না পাওয়া গেলে, নতুন করে তৈরি করা হচ্ছে
+        sh = gc.create(spreadsheet_title)
+        # এবং আপনার (ডেভেলপার) গুগল একাউন্টের সাথে শেয়ার করা হচ্ছে (ঐচ্ছিক)
+        sh.share('huzaifahossainriyad@gmail.com', perm_type='user', role='writer')
+        
+    worksheet = sh.sheet1
+    
+    # ওয়ার্কশীটে হেডার আছে কিনা তা পরীক্ষা করা
+    if not worksheet.get_all_values() or worksheet.row_values(1) != ["Date", "Prayers Completed", "Remaining After", "Note"]:
+        worksheet.clear()
+        worksheet.append_row(["Date", "Prayers Completed", "Remaining After", "Note"])
+        worksheet.format('A1:D1', {'textFormat': {'bold': True}})
+
+    return worksheet
+
+# --- Flask Routes ---
+
 @app.route('/')
 def index():
-    # সেশনে 'credentials' আছে কিনা তা পরীক্ষা করা হচ্ছে
-    if 'credentials' in session:
-        # যদি থাকে, তাহলে ব্যবহারকারী লগইন করা আছে
-        return render_template('index.html')
-    else:
-        # যদি না থাকে, তাহলে তাকে হোমপেজ দেখানো হবে যেখানে লগইন বাটন থাকবে
-        return render_template('index.html')
+    if 'credentials' not in session:
+        return redirect(url_for('login'))
+    return render_template('index.html')
 
 @app.route('/login')
 def login():
@@ -52,7 +104,13 @@ def callback():
     flow.fetch_token(authorization_response=request.url)
     
     credentials = flow.credentials
+    # ব্যবহারকারীর নাম ও ইমেইল সেশনে সেভ করা
     session['credentials'] = credentials_to_dict(credentials)
+    
+    # gspread ক্লায়েন্ট ব্যবহার করে নাম ও ইমেইল নেওয়া (বিকল্প পদ্ধতি)
+    # gc = gspread.authorize(credentials)
+    # session['user_email'] = gc.auth.user_info['email']
+    # session['user_name'] = gc.auth.user_info.get('name', 'User')
 
     return redirect(url_for('index'))
 
@@ -61,14 +119,41 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-def credentials_to_dict(credentials):
-  """Helper function to convert credentials to a JSON serializable dict."""
-  return {'token': credentials.token,
-          'refresh_token': credentials.refresh_token,
-          'token_uri': credentials.token_uri,
-          'client_id': credentials.client_id,
-          'client_secret': credentials.client_secret,
-          'scopes': credentials.scopes}
+# --- API Endpoints for Kaza Data ---
+
+@app.route('/get_kaza_data')
+def get_kaza_data():
+    if 'credentials' not in session:
+        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+        
+    worksheet = get_worksheet()
+    if not worksheet:
+        return jsonify({'status': 'error', 'message': 'Could not connect to Google Sheets.'}), 500
+        
+    records = worksheet.get_all_records()
+    return jsonify({'status': 'success', 'data': records})
+
+@app.route('/save_kaza_data', methods=['POST'])
+def save_kaza_data():
+    if 'credentials' not in session:
+        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+        
+    worksheet = get_worksheet()
+    if not worksheet:
+        return jsonify({'status': 'error', 'message': 'Could not connect to Google Sheets.'}), 500
+        
+    data = request.json
+    # ['Date', 'Prayers Completed', 'Remaining After', 'Note']
+    row_to_add = [
+        data.get('date'),
+        data.get('completed'),
+        data.get('remaining'),
+        data.get('note', '') # নোট ঐচ্ছিক
+    ]
+    
+    worksheet.append_row(row_to_add)
+    
+    return jsonify({'status': 'success', 'message': 'Data saved to Google Sheet.'})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
