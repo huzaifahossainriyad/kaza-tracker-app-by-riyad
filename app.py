@@ -44,19 +44,24 @@ def get_worksheet():
     try:
         sh = gc.open(spreadsheet_title)
     except gspread.exceptions.SpreadsheetNotFound:
+        user_email = session.get('user_email')
         sh = gc.create(spreadsheet_title)
-        # sh.share('your-email@gmail.com', perm_type='user', role='writer')
-        
+        if user_email:
+            sh.share(user_email, perm_type='user', role='writer')
+
     worksheet = sh.sheet1
     
-    # নতুন হেডার যা আমরা ব্যবহার করব
-    new_headers = ["Date", "Note", "Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Witr"]
+    # ফিচার ১৬: নোটের সাথে ট্যাগ যুক্ত করার জন্য নতুন হেডার
+    new_headers = [
+        "Date", "Note", "Tags", "Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Witr",
+        "FajrSunnah", "DhuhrSunnah", "AsrSunnah", "MaghribSunnah", "IshaSunnah"
+    ]
     
     # হেডার চেক করা এবং না থাকলে বা ভুল থাকলে নতুন করে সেট করা
     if not worksheet.get_all_values() or worksheet.row_values(1) != new_headers:
         worksheet.clear()
         worksheet.append_row(new_headers)
-        worksheet.format('A1:H1', {'textFormat': {'bold': True}})
+        worksheet.format('A1:N1', {'textFormat': {'bold': True}})
 
     return worksheet
 
@@ -64,23 +69,7 @@ def get_worksheet():
 
 @app.route('/')
 def index():
-    if 'credentials' not in session:
-        return redirect(url_for('login'))
-    
-    # ইউজারনেম সেশনে সেভ করার জন্য
-    if 'user_name' not in session:
-        try:
-            gc = get_gspread_client()
-            if gc and hasattr(gc.auth, 'user_info'):
-                 session['user_name'] = gc.auth.user_info.get('name', 'User')
-            else:
-                 session['user_name'] = 'User'
-        except Exception as e:
-            print(f"Could not fetch user name: {e}")
-            session['user_name'] = 'User'
-
     return render_template('index.html')
-
 
 @app.route('/login')
 def login():
@@ -94,8 +83,22 @@ def callback():
     state = session.get('state')
     flow = Flow.from_client_secrets_file('client_secret.json', scopes=SCOPES, state=state, redirect_uri=url_for('callback', _external=True))
     flow.fetch_token(authorization_response=request.url)
+    
     credentials = flow.credentials
     session['credentials'] = credentials_to_dict(credentials)
+
+    try:
+        userinfo_endpoint = 'https://www.googleapis.com/oauth2/v3/userinfo'
+        userinfo_response = requests.get(userinfo_endpoint, headers={'Authorization': f'Bearer {credentials.token}'})
+        userinfo = userinfo_response.json()
+        
+        session['user_name'] = userinfo.get('name', 'User')
+        session['user_email'] = userinfo.get('email')
+
+    except Exception as e:
+        print(f"Error fetching user info: {e}")
+        session['user_name'] = 'User'
+
     return redirect(url_for('index'))
 
 @app.route('/logout')
@@ -113,48 +116,125 @@ def get_kaza_data():
     records = worksheet.get_all_records()
     return jsonify({'status': 'success', 'data': records})
 
-# এই ফাংশনটি নতুন ফিচার অনুযায়ী আপডেট করা হয়েছে
 @app.route('/save_kaza_data', methods=['POST'])
 def save_kaza_data():
-    if 'credentials' not in session: 
-        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
-    
+    if 'credentials' not in session: return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
     worksheet = get_worksheet()
-    if not worksheet: 
-        return jsonify({'status': 'error', 'message': 'Could not connect to Google Sheets.'}), 500
+    if not worksheet: return jsonify({'status': 'error', 'message': 'Could not connect to Google Sheets.'}), 500
     
     data = request.json
     
-    # গুগল শীটের হেডার অনুযায়ী ডেটা সাজানো হচ্ছে
-    # হেডার: ["Date", "Note", "Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Witr"]
+    # ফিচার ১৬: ট্যাগ সহ ডেটা প্রস্তুত করা
     row_to_add = [
         data.get('date', ''),
         data.get('note', ''),
-        data.get('Fajr', 0),
-        data.get('Dhuhr', 0),
-        data.get('Asr', 0),
-        data.get('Maghrib', 0),
-        data.get('Isha', 0),
-        data.get('Witr', 0)
+        data.get('tags', ''), # নতুন ট্যাগ ফিল্ড
+        data.get('Fajr', 0), data.get('Dhuhr', 0), data.get('Asr', 0),
+        data.get('Maghrib', 0), data.get('Isha', 0), data.get('Witr', 0),
+        data.get('FajrSunnah', 0), data.get('DhuhrSunnah', 0), data.get('AsrSunnah', 0),
+        data.get('MaghribSunnah', 0), data.get('IshaSunnah', 0)
     ]
     
     worksheet.append_row(row_to_add)
-    
     return jsonify({'status': 'success', 'message': 'Data saved to Google Sheet.'})
 
 @app.route('/get_prayer_times')
 def get_prayer_times():
-    city = 'Dhaka'
-    country = 'Bangladesh'
+    city = request.args.get('city', 'Dhaka')
+    country = request.args.get('country', 'Bangladesh')
+    
     try:
-        url = f"http://api.aladhan.com/v1/timingsByCity?city={city}&country={country}&method=1"
+        today = datetime.date.today().strftime("%d-%m-%Y")
+        url = f"http://api.aladhan.com/v1/timingsByCity/{today}?city={city}&country={country}&method=1"
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
+        
+        if data.get("code") == 200:
+            data['data']['location'] = {'city': city, 'country': country}
+        
         return jsonify(data)
     except requests.exceptions.RequestException as e:
         print(f"Error fetching prayer times: {e}")
-        return jsonify({"status": "error", "message": "Could not fetch prayer times"}), 500
+        return jsonify({"code": 500, "status": "error", "message": "Could not fetch prayer times"}), 500
+
+@app.route('/delete_kaza_log', methods=['POST'])
+def delete_kaza_log():
+    if 'credentials' not in session: return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+    worksheet = get_worksheet()
+    if not worksheet: return jsonify({'status': 'error', 'message': 'Could not connect to Google Sheets.'}), 500
+    
+    data = request.json
+    row_id_to_delete = data.get('row_id')
+
+    if not row_id_to_delete: return jsonify({'status': 'error', 'message': 'Row ID is missing.'}), 400
+
+    try:
+        worksheet.delete_rows(int(row_id_to_delete) + 1)
+        return jsonify({'status': 'success', 'message': 'Log deleted successfully.'})
+    except Exception as e:
+        print(f"Error deleting row: {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to delete log from Google Sheet.'}), 500
+
+@app.route('/update_kaza_log', methods=['POST'])
+def update_kaza_log():
+    if 'credentials' not in session: return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+    worksheet = get_worksheet()
+    if not worksheet: return jsonify({'status': 'error', 'message': 'Could not connect to Google Sheets.'}), 500
+    
+    data = request.json
+    row_id = data.get('row_id')
+    updated_data = data.get('updated_data')
+
+    if not row_id or not updated_data: return jsonify({'status': 'error', 'message': 'Required data is missing.'}), 400
+
+    try:
+        # ফিচার ১৬: ট্যাগ সহ ডেটা আপডেট করা
+        row_to_update = [
+            updated_data.get('Date', ''),
+            updated_data.get('Note', ''),
+            updated_data.get('Tags', ''), # নতুন ট্যাগ ফিল্ড
+            updated_data.get('Fajr', 0), updated_data.get('Dhuhr', 0), updated_data.get('Asr', 0),
+            updated_data.get('Maghrib', 0), updated_data.get('Isha', 0), updated_data.get('Witr', 0),
+            updated_data.get('FajrSunnah', 0), updated_data.get('DhuhrSunnah', 0), updated_data.get('AsrSunnah', 0),
+            updated_data.get('MaghribSunnah', 0), updated_data.get('IshaSunnah', 0)
+        ]
+        
+        cell_range = f'A{int(row_id) + 1}:N{int(row_id) + 1}' # রেঞ্জ N পর্যন্ত বাড়ানো হয়েছে
+        worksheet.update(cell_range, [row_to_update])
+        
+        return jsonify({'status': 'success', 'message': 'Log updated successfully.'})
+    except Exception as e:
+        print(f"Error updating row: {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to update log in Google Sheet.'}), 500
+
+# ফিচার ১৮: ডেটা ইমপোর্ট করার জন্য নতুন API এন্ডপয়েন্ট
+@app.route('/import_kaza_data', methods=['POST'])
+def import_kaza_data():
+    if 'credentials' not in session: return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+    worksheet = get_worksheet()
+    if not worksheet: return jsonify({'status': 'error', 'message': 'Could not connect to Google Sheets.'}), 500
+    
+    logs_to_import = request.json.get('data')
+    if not logs_to_import: return jsonify({'status': 'error', 'message': 'No data to import.'}), 400
+
+    try:
+        rows_to_append = []
+        for log in logs_to_import:
+            row = [
+                log.get('Date', ''), log.get('Note', ''), log.get('Tags', ''),
+                log.get('Fajr', 0), log.get('Dhuhr', 0), log.get('Asr', 0),
+                log.get('Maghrib', 0), log.get('Isha', 0), log.get('Witr', 0),
+                log.get('FajrSunnah', 0), log.get('DhuhrSunnah', 0), log.get('AsrSunnah', 0),
+                log.get('MaghribSunnah', 0), log.get('IshaSunnah', 0)
+            ]
+            rows_to_append.append(row)
+        
+        worksheet.append_rows(rows_to_append)
+        return jsonify({'status': 'success', 'message': f'{len(rows_to_append)} logs imported successfully.'})
+    except Exception as e:
+        print(f"Error importing data: {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to import data to Google Sheet.'}), 500
 
 # --- Main Execution ---
 if __name__ == '__main__':

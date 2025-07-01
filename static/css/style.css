@@ -1,207 +1,284 @@
 /* ================== General & Layout Styles ================== */
 :root {
-    --sidebar-width: 300px;
-    --primary-color: #2c3e50;
-    --secondary-color: #34495e;
+    --sidebar-width: 280px;
+    --primary-color: #1a2c42; 
+    --secondary-color: #2c3e50;
     --accent-color: #3498db;
+    --success-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --warning-color: #f39c12;
     --light-text: #ecf0f1;
     --dark-text: #34495e;
     --card-bg: #ffffff;
-    --body-bg: #f4f7f9;
-    --border-color: #e1e4e8;
+    --body-bg: #f0f2f5;
+    --border-color: #e8eaf0;
+    --font-family: 'Hind Siliguri', sans-serif;
+    --border-radius: 12px;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --transition-speed: 0.3s;
 }
 
 body {
-    font-family: 'Hind Siliguri', sans-serif;
+    font-family: var(--font-family);
     background-color: var(--body-bg);
     color: var(--dark-text);
     margin: 0;
-    line-height: 1.6;
+    line-height: 1.7;
+    font-size: 16px;
+    transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
-.page-wrapper {
-    display: flex;
-    min-height: 100vh;
-}
+.page-wrapper { display: flex; min-height: 100vh; }
 
 /* ================== Sidebar Styles ================== */
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--primary-color);
     color: var(--light-text);
-    padding: 25px;
+    padding: 30px 20px;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
     position: fixed;
     height: 100%;
-}
-
-.sidebar-header h3 {
-    color: var(--accent-color);
-}
-
-.prayer-times-list .prayer-item.current {
-    background-color: var(--accent-color);
-    font-weight: bold;
-}
-
-.countdown-timer #countdown {
-    color: var(--accent-color);
-}
-
-/* Other sidebar styles from previous steps remain the same */
-.sidebar-header { text-align: center; border-bottom: 1px solid var(--secondary-color); padding-bottom: 20px; margin-bottom: 20px; }
-.sidebar-header p { margin: 5px 0 0; font-size: 0.9em; opacity: 0.8; }
-.prayer-times-list .prayer-item { display: flex; justify-content: space-between; padding: 12px 10px; border-radius: 6px; margin-bottom: 8px; background-color: var(--secondary-color); font-size: 1.1em; }
-.prayer-times-list .prayer-name { font-weight: 500; }
-.countdown-timer { margin-top: auto; text-align: center; background-color: var(--secondary-color); padding: 20px; border-radius: 8px; }
-#countdown { font-size: 2.5em; font-weight: bold; letter-spacing: 2px; }
-#next-prayer-name { margin-top: 5px; font-size: 1.1em; }
-.sidebar-footer { text-align: center; margin-top: 20px; font-size: 0.8em; opacity: 0.6; }
-
-
-/* ================== Main Content Styles ================== */
-.main-container {
-    flex: 1;
-    padding: 25px;
-    margin-left: var(--sidebar-width); /* Push content to the right of the sidebar */
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.header {
-    background: var(--card-bg);
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    position: relative;
-}
-/* Other header styles remain */
-.header h1 { margin: 0; font-size: 1.8em; color: var(--dark-text); }
-.header p { margin: 5px 0 0; color: #666; }
-.login-btn, .logout-btn { position: absolute; top: 20px; right: 20px; background-color: var(--accent-color); color: white; padding: 8px 15px; border-radius: 6px; text-decoration: none; font-weight: 500; transition: background-color 0.3s; }
-.logout-btn { background-color: #e74c3c; }
-
-
-.card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.card h2 {
-    margin-top: 0;
-    color: var(--primary-color);
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-}
-.card h4 {
-    color: var(--secondary-color);
-    margin-bottom: 10px;
-}
-
-
-/* ================== NEW GRID STYLES ================== */
-
-.prayer-summary-grid, .prayer-input-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
-}
-
-.prayer-summary-item, .form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.prayer-summary-item {
-    background-color: #f6f8fa;
-    padding: 10px;
-    border-radius: 6px;
-    text-align: center;
-}
-.prayer-summary-item .prayer-label {
-    font-weight: 600;
-    font-size: 1em;
-    color: var(--secondary-color);
-}
-.prayer-summary-item .prayer-count {
-    font-size: 1.5em;
-    font-weight: bold;
-    color: var(--accent-color);
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-.form-group input, .calculator input, .calculator select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-sizing: border-box; 
-    text-align: center;
-}
-
-/* ================== Button and Setup Section Styles ================== */
-
-#update-kaza-btn, #calculate-btn, #save-manual-btn, #auto-calc-result button {
-    width: 100%;
-    padding: 12px;
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 15px;
-}
-
-.setup-section {
-    border-top: 1px solid var(--border-color);
-    padding-top: 20px;
-    margin-top: 20px;
-}
-.setup-section:first-of-type {
-    border-top: none;
-    padding-top: 0;
-    margin-top: 0;
-}
-
-
-/* ================== Log Table Styles ================== */
-.log-container {
-    max-height: 300px;
+    transition: width var(--transition-speed) ease, background-color var(--transition-speed);
     overflow-y: auto;
 }
-#kaza-log-table {
-    width: 100%;
-    border-collapse: collapse;
-}
 
-#kaza-log-table th, #kaza-log-table td {
-    padding: 12px;
-    text-align: center;
-    border-bottom: 1px solid var(--border-color);
-}
+.sidebar-header { text-align: center; border-bottom: 1px solid var(--secondary-color); padding-bottom: 20px; margin-bottom: 20px; }
+.sidebar-header h3 { color: var(--accent-color); margin: 0; transition: color var(--transition-speed); }
+.sidebar-header p { margin: 5px 0 0; font-size: 0.9em; opacity: 0.7; }
+.hijri-date-display { color: var(--success-color); font-weight: 600; margin-top: 10px; opacity: 1; transition: color var(--transition-speed); }
 
-#kaza-log-table th {
-    background-color: #f6f8fa;
+.location-settings { padding: 15px; margin-bottom: 15px; background-color: var(--secondary-color); border-radius: var(--border-radius); transition: background-color var(--transition-speed); }
+.location-settings h4 { margin-top: 0; margin-bottom: 15px; text-align: center; font-weight: 500; opacity: 0.9; }
+.location-settings input { width: 100%; padding: 10px; border: 1px solid var(--primary-color); border-radius: var(--border-radius); background-color: var(--primary-color); color: var(--light-text); box-sizing: border-box; text-align: left; font-size: 0.9em; transition: background-color var(--transition-speed); }
+.location-settings input::placeholder { color: rgba(236, 240, 241, 0.5); }
+#update-location-btn { width: 100%; padding: 10px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--border-radius); font-size: 1em; font-weight: 600; cursor: pointer; transition: background-color var(--transition-speed); margin-top: 5px; }
+#update-location-btn:hover { background-color: #2980b9; }
+
+.prayer-times { flex-grow: 1; }
+.prayer-times-list .prayer-item { display: flex; justify-content: space-between; padding: 14px; border-radius: var(--border-radius); margin-bottom: 10px; background-color: var(--secondary-color); font-size: 1.1em; transition: background-color var(--transition-speed), transform var(--transition-speed); }
+.prayer-times-list .prayer-item:hover { transform: translateX(5px); }
+.prayer-times-list .prayer-item.current { background-color: var(--accent-color); font-weight: bold; color: white; }
+.prayer-times-list .prayer-name { font-weight: 500; }
+
+.countdown-timer { text-align: center; background-color: var(--secondary-color); padding: 20px; border-radius: var(--border-radius); margin-top: 20px; transition: background-color var(--transition-speed); }
+.countdown-timer h4 { margin: 0 0 10px; opacity: 0.8; font-weight: 500; }
+#countdown { font-size: 2.2em; font-weight: 700; color: var(--success-color); letter-spacing: 2px; transition: color var(--transition-speed); }
+#next-prayer-name { margin-top: 5px; font-size: 1.1em; }
+.sidebar-footer { text-align: center; margin-top: 20px; font-size: 0.8em; opacity: 0.5; }
+
+/* ================== Main Content Styles ================== */
+.main-container { flex: 1; padding: 30px; margin-left: var(--sidebar-width); transition: margin-left var(--transition-speed) ease; }
+.container { max-width: 850px; margin: 0 auto; }
+
+.header { background: var(--card-bg); padding: 25px 30px; border-radius: var(--border-radius); margin-bottom: 30px; box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center; transition: background-color var(--transition-speed); }
+.header-text h1 { margin: 0; font-size: 1.8em; color: var(--dark-text); transition: color var(--transition-speed); }
+.header-text p { margin: 5px 0 0; color: #777; }
+.login-btn, .logout-btn { background-color: var(--accent-color); color: white; padding: 10px 20px; border-radius: var(--border-radius); text-decoration: none; font-weight: 600; transition: background-color var(--transition-speed), box-shadow var(--transition-speed); border: none; cursor: pointer; }
+.login-btn:hover { background-color: #2980b9; box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4); }
+.logout-btn { background-color: var(--danger-color); }
+.logout-btn:hover { background-color: #c0392b; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4); }
+
+.card { display: block; background-color: var(--card-bg); border-radius: var(--border-radius); padding: 30px; margin-bottom: 30px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); transition: background-color var(--transition-speed), border-color var(--transition-speed), display 0.5s; }
+.card h2 { margin-top: 0; margin-bottom: 20px; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 15px; font-size: 1.5em; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: color var(--transition-speed), border-color var(--transition-speed); }
+.card h2 i { margin-right: 5px; }
+.card h4 { color: var(--secondary-color); margin-bottom: 15px; font-size: 1.2em; transition: color var(--transition-speed); }
+
+/* ================== Grid & Form Styles ================== */
+.prayer-summary-grid, .prayer-input-grid .prayer-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 20px; }
+.prayer-summary-item { background-color: var(--body-bg); padding: 15px; border-radius: var(--border-radius); text-align: center; border: 1px solid #e1e4e8; transition: background-color var(--transition-speed), border-color var(--transition-speed); }
+.prayer-summary-item .prayer-label { font-weight: 600; font-size: 0.9em; color: var(--secondary-color); transition: color var(--transition-speed); }
+.prayer-summary-item .prayer-count { font-size: 1.6em; font-weight: 700; color: var(--accent-color); margin-top: 5px; display: block; transition: color var(--transition-speed); }
+
+.form-group { margin-bottom: 10px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 0.9em; }
+body.dark-mode .form-group label { color: var(--light-text); }
+.form-group input, .calculator input, .calculator select, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: var(--border-radius); box-sizing: border-box; font-size: 1em; transition: border-color var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed), color var(--transition-speed); }
+.form-group input[type="number"] { text-align: center; }
+.form-group input:focus, .calculator input:focus, .calculator select:focus, .form-group select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
+
+/* ================== Button Styles ================== */
+.btn-primary, #update-kaza-btn, #calculate-btn, #save-manual-btn, #auto-calc-result button, #save-goal-btn, #enable-notifications-btn, #generate-report-btn { width: 100%; padding: 14px; background-color: var(--success-color); color: white; border: none; border-radius: var(--border-radius); font-size: 1.1em; font-weight: 600; cursor: pointer; transition: background-color var(--transition-speed), transform var(--transition-speed); margin-top: 20px; }
+#calculate-btn, #save-manual-btn, #auto-calc-result button, #save-goal-btn, #enable-notifications-btn, #generate-report-btn { background-color: var(--accent-color); }
+.btn-primary:hover, #update-kaza-btn:hover, #calculate-btn:hover, #save-manual-btn:hover, #auto-calc-result button:hover, #save-goal-btn:hover, #enable-notifications-btn:hover, #generate-report-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+#update-kaza-btn:hover { background-color: #27ae60; }
+#calculate-btn:hover, #save-manual-btn:hover, #auto-calc-result button:hover, #save-goal-btn:hover, #enable-notifications-btn:hover, #generate-report-btn:hover { background-color: #2980b9; }
+
+/* ================== Log Table Styles ================== */
+.log-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
+.log-header h2 { margin: 0; padding: 0; border: none; }
+.log-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.log-actions button { background-color: var(--secondary-color); color: white; padding: 8px 16px; border: none; border-radius: var(--border-radius); font-weight: 500; cursor: pointer; transition: background-color var(--transition-speed); display: inline-flex; align-items: center; gap: 8px; }
+.log-actions button:hover { background-color: var(--primary-color); }
+.log-container { max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); }
+#kaza-log-table { width: 100%; border-collapse: collapse; }
+#kaza-log-table th, #kaza-log-table td { padding: 12px 8px; text-align: center; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
+#kaza-log-table th { background-color: #f9fafb; font-weight: 600; position: sticky; top: 0; z-index: 1; }
+#kaza-log-table tbody tr:nth-child(even) { background-color: #f9fafb; }
+#kaza-log-table tbody tr:hover { background-color: #f0f8ff; }
+#kaza-log-table .edit-btn, #kaza-log-table .delete-btn { padding: 6px 12px; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.9em; font-family: var(--font-family); transition: background-color 0.3s, transform 0.2s; margin: 0 3px; }
+#kaza-log-table .edit-btn { background-color: var(--accent-color); }
+#kaza-log-table .delete-btn { background-color: var(--danger-color); }
+
+/* ================== Theme Switch ================== */
+.header-actions { display: flex; align-items: center; gap: 15px; }
+.theme-switch-wrapper { display: flex; align-items: center; }
+.theme-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
+.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--accent-color); }
+input:checked + .slider:before { transform: translateX(22px); }
+
+/* ================== Dark Mode Styles ================== */
+body.dark-mode { --primary-color: #0d1b2a; --secondary-color: #1b263b; --dark-text: #e0e1dd; --card-bg: #1b263b; --body-bg: #0d1b2a; --border-color: #415a77; }
+body.dark-mode .prayer-summary-item { background-color: #0d1b2a; border-color: #415a77; }
+body.dark-mode #kaza-log-table th { background-color: #0d1b2a; }
+body.dark-mode #kaza-log-table tbody tr:nth-child(even) { background-color: #162130; }
+body.dark-mode #kaza-log-table tbody tr:hover { background-color: #2c3e50; }
+body.dark-mode .form-group input, body.dark-mode .calculator input, body.dark-mode .calculator select, body.dark-mode .form-group select { background-color: #415a77; color: var(--dark-text); border-color: #778da9; }
+body.dark-mode .location-settings input { border-color: #415a77; background-color: #0d1b2a; }
+body.dark-mode .log-actions button { background-color: #415a77; }
+body.dark-mode .log-actions button:hover { background-color: #778da9; }
+body.dark-mode .progress-bar-container { background-color: #0d1b2a; border-color: #415a77; }
+body.dark-mode .prayer-type-tabs .tab-btn { background-color: #2c3e50; color: var(--light-text); }
+body.dark-mode .prayer-type-tabs .tab-btn.active { background-color: var(--accent-color); }
+body.dark-mode .quote-card { background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); }
+body.dark-mode .accordion-item .accordion-question { background-color: var(--secondary-color); }
+body.dark-mode .accordion-item .accordion-answer { background-color: #0d1b2a; }
+body.dark-mode .header-text p { color: #999; }
+body.dark-mode .feature-item.disabled { background-color: var(--primary-color); }
+
+/* ================== Custom Modal Styles ================== */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+.modal-content { background-color: var(--card-bg); padding: 30px; border-radius: var(--border-radius); text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; animation: modal-fade-in 0.3s ease-out; }
+@keyframes modal-fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+body.dark-mode .modal-content { background-color: var(--secondary-color); }
+#modal-message { font-size: 1.2em; color: var(--dark-text); margin-top: 0; margin-bottom: 25px; line-height: 1.5; }
+body.dark-mode #modal-message { color: var(--light-text); }
+.modal-actions { display: flex; justify-content: center; gap: 15px; }
+.modal-btn { padding: 10px 25px; border: none; border-radius: var(--border-radius); color: white; cursor: pointer; font-size: 1em; font-family: var(--font-family); transition: background-color 0.3s, transform 0.2s; }
+.modal-btn:hover { transform: translateY(-2px); }
+#modal-ok-btn { background-color: var(--success-color); }
+#modal-confirm-btn { background-color: var(--danger-color); }
+.modal-btn.cancel { background-color: #7f8c8d; }
+
+/* ================== Progress Bar ================== */
+.progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: var(--border-radius); padding: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color); }
+.progress-bar { height: 20px; width: 0%; background-color: var(--success-color); border-radius: 8px; text-align: center; line-height: 20px; color: white; font-weight: 600; transition: width 0.5s ease-in-out, background-color var(--transition-speed); }
+
+/* ================== New Feature Styles ================== */
+.tag-badge { display: inline-block; background-color: var(--accent-color); color: white; padding: 3px 10px; border-radius: 15px; font-size: 0.8em; margin: 2px; font-weight: 500; }
+.prayer-type-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+.tab-btn { padding: 10px 20px; border: none; background-color: var(--body-bg); color: var(--dark-text); font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.3s ease; }
+.tab-btn.active { background-color: var(--accent-color); color: white; }
+.quote-card { position: relative; background: linear-gradient(135deg, #eaf5ff, #ffffff); text-align: center; }
+.new-quote-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.2em; color: var(--secondary-color); cursor: pointer; transition: transform 0.3s, color var(--transition-speed); }
+.new-quote-btn:hover { transform: rotate(180deg); }
+.streak-card .streak-info { display: flex; justify-content: space-around; text-align: center; margin-bottom: 25px; }
+.streak-card .streak-item .streak-icon { font-size: 2.5em; margin-bottom: 10px; display: block; }
+.streak-card .streak-item .streak-icon .fa-fire { color: var(--danger-color); }
+.streak-card .streak-item .streak-icon .fa-star { color: var(--warning-color); }
+.streak-card .streak-item p { margin: 0; font-weight: 500; color: var(--secondary-color); }
+.streak-card .streak-item .streak-value { font-size: 1.5em; font-weight: 700; color: var(--primary-color); }
+#achievements-display { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
+.achievement-badge { display: flex; align-items: center; gap: 10px; background-color: var(--body-bg); padding: 10px 15px; border-radius: 50px; border: 1px solid var(--border-color); }
+.achievement-badge .badge-icon { font-size: 1.5em; color: var(--success-color); }
+.achievement-badge.locked { opacity: 0.5; }
+.report-controls { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
+#report-display { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+
+/* Accordion Library (Fiqh, Salat, Dua) */
+.accordion-library .accordion-item { margin-bottom: 10px; }
+.accordion-library .accordion-question { background-color: var(--body-bg); padding: 15px; font-weight: 600; cursor: pointer; border-radius: var(--border-radius); display: flex; justify-content: space-between; align-items: center; transition: background-color var(--transition-speed); }
+.accordion-library .accordion-question::after { content: '\f078'; font-family: 'Font Awesome 6 Free'; font-weight: 900; transition: transform 0.3s; }
+.accordion-library .accordion-item.active .accordion-question::after { transform: rotate(180deg); }
+.accordion-library .accordion-answer { background-color: #fafafa; padding: 0 15px; max-height: 0; overflow: hidden; transition: all 0.3s ease-out; border-bottom-left-radius: var(--border-radius); border-bottom-right-radius: var(--border-radius); }
+.accordion-library .accordion-item.active .accordion-answer { max-height: 500px; padding: 15px; }
+.accordion-library .accordion-answer h4 { margin-top: 0; }
+
+/* Settings Card */
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+.setting-section h4 { border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; }
+#dashboard-customization-controls label, .theme-selector label { display: block; margin-bottom: 8px; cursor: pointer; }
+#dashboard-customization-controls input { margin-right: 10px; }
+
+/* Color Theme Selector (Improved) */
+.theme-selector label {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+.theme-selector input[type="radio"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    margin: 0 10px 0 0;
+    font: inherit;
+    color: currentColor;
+    width: 1.15em;
+    height: 1.15em;
+    border: 0.15em solid currentColor;
+    border-radius: 50%;
+    transform: translateY(-0.075em);
+    display: grid;
+    place-content: center;
+}
+.theme-selector input[type="radio"]::before {
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em var(--accent-color);
+}
+.theme-selector input[type="radio"]:checked::before {
+    transform: scale(1);
+}
+.theme-selector input[type="radio"]:checked + span {
+    color: var(--accent-color);
     font-weight: 600;
-    position: sticky;
-    top: 0;
 }
 
+/* Color Themes */
+body.forest { --primary-color: #2d5a2d; --secondary-color: #3a6b35; --accent-color: #81b214; --success-color: #a2de96; }
+body.sunset { --primary-color: #b23b3b; --secondary-color: #cc561e; --accent-color: #e67e22; --success-color: #f39c12; }
+body.ocean { --primary-color: #003153; --secondary-color: #1e5288; --accent-color: #0077be; --success-color: #0099d4; }
+body.forest.dark-mode { --primary-color: #1a3a1a; --secondary-color: #2a5b25; }
+body.sunset.dark-mode { --primary-color: #921b1b; --secondary-color: #ac460e; }
+body.ocean.dark-mode { --primary-color: #002143; --secondary-color: #0e4278; }
+
+
+/* Voice Command Button */
+#voice-command-btn { background: none; border: none; font-size: 1.2em; color: var(--accent-color); cursor: pointer; transition: color 0.3s, transform 0.2s; }
+#voice-command-btn:hover { transform: scale(1.1); }
+#voice-command-btn.is-listening { color: var(--danger-color); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+/* Advanced Features (Disabled Look) */
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.feature-item.disabled { background-color: var(--body-bg); padding: 20px; border-radius: var(--border-radius); text-align: center; opacity: 0.7; cursor: not-allowed; transition: background-color var(--transition-speed), border-color var(--transition-speed); border: 1px dashed var(--border-color); }
+.feature-item.disabled i { display: block; font-size: 2em; margin-bottom: 10px; color: var(--secondary-color); opacity: 0.5; }
+.feature-item.disabled small { font-weight: 600; color: var(--danger-color); }
+
+/* Print Styles */
+@media print {
+    body { background-color: #fff; color: #000; }
+    .sidebar, .header, .card:not(#log-card), .modal-overlay, .log-actions { display: none !important; }
+    .main-container { margin-left: 0; padding: 0; }
+    .page-wrapper { display: block; }
+    .container { max-width: 100%; }
+    .card { box-shadow: none; border: none; padding: 0; margin-bottom: 20px; }
+    .log-header h2 { font-size: 1.5em; text-align: center; border: none; }
+    .log-container { max-height: none; overflow: visible; border: none; }
+    #kaza-log-table { font-size: 10pt; width: 100%; }
+    #kaza-log-table th, #kaza-log-table td { padding: 8px 4px; border: 1px solid #ccc; }
+    #kaza-log-table th:last-child, #kaza-log-table td:last-child { display: none; } /* Hide actions column */
+    @page { size: A4 landscape; margin: 20mm; }
+}

@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>কাজা নামাজ ট্র্যাকার</title>
+    <title>কাজা ট্র্যাকার ফাইনাল</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
 </head>
 <body>
     <div class="page-wrapper">
@@ -13,8 +19,23 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h3>নামাজের সময়সূচী</h3>
-                <p>ঢাকা, বাংলাদেশ</p>
+                <p id="location-display">লোড হচ্ছে...</p>
+                <p id="hijri-date" class="hijri-date-display"></p>
             </div>
+
+            <div class="location-settings">
+                <form id="location-form">
+                    <h4>শহর পরিবর্তন করুন</h4>
+                    <div class="form-group">
+                        <input type="text" id="city-input" placeholder="শহরের নাম" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="country-input" placeholder="দেশের নাম" required>
+                    </div>
+                    <button type="submit" id="update-location-btn">আপডেট করুন</button>
+                </form>
+            </div>
+
             <div class="prayer-times">
                 <div id="prayer-times-list"><p class="loading-text">লোড হচ্ছে...</p></div>
             </div>
@@ -32,65 +53,165 @@
         <div class="main-container">
             <div class="container">
                 <header class="header">
-                    {% if session.get('user_name') %}
-                        <h1>আসসালামু আলাইকুম, {{ session.get('user_name') }}</h1>
-                    {% else %}
-                         <h1>কাজা নামাজ ট্র্যাকার</h1>
-                    {% endif %}
-
-                    {% if 'credentials' in session %}
+                    <div class="header-text">
+                        {% if session.get('user_name') %}
+                            <h1>আসসালামু আলাইকুম, {{ session.get('user_name') }}</h1>
+                        {% else %}
+                             <h1>কাজা নামাজ ট্র্যাকার</h1>
+                        {% endif %}
                         <p>আপনার কাজা নামাজের বিস্তারিত হিসাব রাখুন</p>
-                        <a href="{{ url_for('logout') }}" class="logout-btn">লগআউট</a>
-                    {% else %}
-                        <a href="{{ url_for('login') }}" class="login-btn">গুগল দিয়ে লগইন করুন</a>
-                    {% endif %}
+                    </div>
+                    <div class="header-actions">
+                        <div class="theme-switch-wrapper">
+                            <label class="theme-switch" for="theme-checkbox">
+                                <input type="checkbox" id="theme-checkbox" />
+                                <div class="slider round"></div>
+                            </label>
+                        </div>
+                        {% if 'credentials' in session %}
+                            <a href="{{ url_for('logout') }}" class="logout-btn">লগআউট</a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}" class="login-btn">গুগল দিয়ে লগইন করুন</a>
+                        {% endif %}
+                    </div>
                 </header>
 
-                {% if 'credentials' in session %}
+                {% if 'credentials' not in session %}
+                <div class="card">
+                    <h2>স্বাগতম!</h2>
+                    <p>আপনার কাজা নামাজের হিসাব রাখা শুরু করতে, অনুগ্রহ করে গুগল দিয়ে লগইন করুন। আপনার সমস্ত ডেটা আপনার ব্যক্তিগত গুগল ড্রাইভে সম্পূর্ণ নিরাপদে সংরক্ষিত থাকবে।</p>
+                    <a href="{{ url_for('login') }}" class="login-btn" style="width: 100%; text-align: center; display: block; margin-top: 20px;">গুগল দিয়ে লগইন করুন</a>
+                </div>
+                {% else %}
                 <main class="main-content">
-                    <!-- সেভ করা ডেটা দেখানোর সেকশন -->
-                    <div class="card">
-                        <h2>আপনার বর্তমান বাকি কাজা</h2>
-                        <div id="summary-display" class="prayer-summary-grid">
-                            <!-- JS দিয়ে ডেটা এখানে লোড হবে -->
-                            <p>লোড হচ্ছে...</p>
+                    <!-- ফিচার ৩৫: ইউজার প্রোফাইল পেজ -->
+                    <div class="card" id="profile-card">
+                        <h2><i class="fas fa-user-circle"></i> ইউজার প্রোফাইল</h2>
+                        <div class="profile-details">
+                            <p><strong>নাম:</strong> <span id="profile-name">{{ session.get('user_name') }}</span></p>
+                            <p><strong>ইমেইল:</strong> <span id="profile-email">{{ session.get('user_email') }}</span></p>
                         </div>
                     </div>
+
+                    <!-- ফিচার ২৯, ৩১, ৩২: কাস্টমাইজেশন -->
+                    <div class="card" id="settings-card">
+                        <h2><i class="fas fa-cogs"></i> অ্যাপ সেটিংস</h2>
+                        <div class="settings-grid">
+                            <!-- ড্যাশবোর্ড কাস্টমাইজেশন -->
+                            <div class="setting-section">
+                                <h4>ড্যাশবোর্ড সাজান</h4>
+                                <div id="dashboard-customization-controls">
+                                    <!-- Checkboxes will be inserted by JS -->
+                                </div>
+                            </div>
+                            <!-- কালার থিম -->
+                            <div class="setting-section">
+                                <h4>কালার থিম</h4>
+                                <div id="theme-controls" class="theme-selector">
+                                    <label><input type="radio" name="theme" value="default" checked> ডিফল্ট</label>
+                                    <label><input type="radio" name="theme" value="forest"> ফরেস্ট</label>
+                                    <label><input type="radio" name="theme" value="sunset"> সানসেট</label>
+                                    <label><input type="radio" name="theme" value="ocean"> ওশান</label>
+                                </div>
+                            </div>
+                            <!-- ফন্ট কাস্টমাইজেশন -->
+                            <div class="setting-section">
+                                <h4>ফন্ট পরিবর্তন</h4>
+                                <select id="font-selector" class="form-group">
+                                    <option value="'Hind Siliguri', sans-serif">হিন্দ সিলিগুড়ি (ডিফল্ট)</option>
+                                    <option value="'Noto Sans Bengali', sans-serif">নোটো স্যান্স বেঙ্গলি</option>
+                                    <option value="'Tiro Bangla', serif">তিরো বাংলা</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card quote-card" id="quote-card-main">
+                        <h2><i class="fas fa-quote-left"></i> আজকের বাণী</h2>
+                        <blockquote id="islamic-quote-text">লোড হচ্ছে...</blockquote>
+                        <cite id="islamic-quote-source"></cite>
+                        <button id="new-quote-btn" class="new-quote-btn" title="নতুন উক্তি দেখুন"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+
+                    <div class="card streak-card" id="streak-card-main">
+                        <h2><i class="fas fa-trophy"></i> ধারাবাহিকতা ও পুরস্কার</h2>
+                        <div class="streak-info">
+                            <div class="streak-item"><span class="streak-icon"><i class="fas fa-fire"></i></span><p>বর্তমান স্ট্রিক</p><span id="streak-count" class="streak-value">০ দিন</span></div>
+                            <div class="streak-item"><span class="streak-icon"><i class="fas fa-star"></i></span><p>সর্বোচ্চ স্ট্রিক</p><span id="max-streak-count" class="streak-value">০ দিন</span></div>
+                        </div>
+                        <div id="achievements-display"><h4>অর্জনসমূহ</h4></div>
+                    </div>
                     
-                    <!-- দৈনিক আপডেট সেকশন -->
-                    <div class="card">
-                        <h2>আজ আদায় করা কাজা যোগ করুন</h2>
-                        <div id="daily-update-form" class="prayer-input-grid">
-                            <!-- প্রতিটি নামাজের জন্য ইনপুট বক্স -->
-                            <div class="form-group"><label>ফজর</label><input type="number" min="0" placeholder="0" data-prayer="Fajr"></div>
-                            <div class="form-group"><label>যোহর</label><input type="number" min="0" placeholder="0" data-prayer="Dhuhr"></div>
-                            <div class="form-group"><label>আসর</label><input type="number" min="0" placeholder="0" data-prayer="Asr"></div>
-                            <div class="form-group"><label>মাগরিব</label><input type="number" min="0" placeholder="0" data-prayer="Maghrib"></div>
-                            <div class="form-group"><label>ইশা</label><input type="number" min="0" placeholder="0" data-prayer="Isha"></div>
-                            <div class="form-group"><label>বিতর</label><input type="number" min="0" placeholder="0" data-prayer="Witr"></div>
+                    <div class="card" id="summary-card">
+                        <h2>আপনার বর্তমান বাকি কাজা</h2>
+                        <div id="summary-display" class="prayer-summary-grid"><p>লোড হচ্ছে...</p></div>
+                    </div>
+                    
+                    <div class="card" id="completion-card">
+                        <h2><i class="fas fa-flag-checkered"></i> সমাপ্তির পূর্বাভাস</h2>
+                        <p id="estimated-completion-date">পূর্বাভাস লোড হচ্ছে...</p>
+                    </div>
+
+                    <div class="card" id="goal-card">
+                        <h2>দৈনিক লক্ষ্য ও অগ্রগতি</h2>
+                        <div id="goal-section">
+                            <div class="form-group"><label for="daily-goal-input">আপনার দৈনিক কাজা আদায়ের লক্ষ্য নির্ধারণ করুন:</label><input type="number" id="daily-goal-input" min="1" placeholder="যেমন: 5"></div>
+                            <button id="save-goal-btn">লক্ষ্য সেভ করুন</button>
                         </div>
-                        <div class="form-group">
-                            <label for="daily-note">নোট (ঐচ্ছিক)</label>
-                            <input type="text" id="daily-note" placeholder="আজকের আদায়কৃত নামাজের বিবরণ">
+                        <div id="progress-section" style="display: none; margin-top: 20px;">
+                            <h4>আজকের অগ্রগতি</h4>
+                            <div class="progress-bar-container"><div id="progress-bar" class="progress-bar"></div></div>
+                            <p id="progress-text" style="text-align: center; font-weight: 500;">লোড হচ্ছে...</p>
                         </div>
+                    </div>
+
+                    <div class="card" id="chart-card" style="display:none;">
+                        <h2>আপনার অগ্রগতির গ্রাফ</h2>
+                        <div style="height:300px;"><canvas id="kaza-progress-chart"></canvas></div>
+                    </div>
+
+                    <div class="card" id="reason-analysis-card" style="display:none;">
+                        <h2><i class="fas fa-chart-pie"></i> কারণ বিশ্লেষণ</h2>
+                        <div style="height:300px;"><canvas id="reason-analysis-chart"></canvas></div>
+                    </div>
+
+                    <div class="card" id="daily-update-card">
+                        <h2>আজ আদায় করা কাজা যোগ করুন
+                            <!-- ফিচার ৩৪: ভয়েস কমান্ড -->
+                            <button id="voice-command-btn" title="ভয়েস কমান্ড দিন"><i class="fas fa-microphone"></i></button>
+                        </h2>
+                        <div id="daily-update-form" class="prayer-input-grid prayer-toggle-container">
+                            <div class="prayer-type-tabs">
+                                <button class="tab-btn active" data-type="Fard">ফরজ ও বিতর</button>
+                                <button class="tab-btn" data-type="Sunnah">সুন্নাত</button>
+                            </div>
+                            <div class="prayer-inputs Fard"></div>
+                            <div class="prayer-inputs Sunnah" style="display: none;"></div>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;"><label for="daily-tags">ট্যাগ (ঐচ্ছিক, কমা দিয়ে আলাদা করুন)</label><input type="text" id="daily-tags" placeholder="যেমন: সফর, অসুস্থতা, অলসতা"></div>
+                        <div class="form-group" style="margin-top: 15px;"><label for="daily-note">নোট (ঐচ্ছিক)</label><input type="text" id="daily-note" placeholder="আজকের আদায়কৃত নামাজের বিবরণ"></div>
                         <button id="update-kaza-btn">দৈনিক হিসাব যোগ করুন</button>
                     </div>
 
-                    <!-- বিস্তারিত লগ টেবিল -->
-                    <div class="card">
-                        <h2>বিস্তারিত লগ</h2>
+                    <div class="card" id="log-card">
+                        <div class="log-header">
+                            <h2>বিস্তারিত লগ</h2>
+                            <div class="log-actions">
+                                <button id="import-csv-btn" title="CSV ফাইল থেকে ডেটা যোগ করুন"><i class="fas fa-file-import"></i> ইম্পোর্ট</button>
+                                <input type="file" id="csv-file-input" accept=".csv" style="display:none;"/>
+                                <button id="export-csv-btn" title="সব ডেটা CSV ফাইলে ডাউনলোড করুন"><i class="fas fa-file-export"></i> এক্সপোর্ট</button>
+                                <!-- ফিচার ৩৬: প্রিন্ট-ফ্রেন্ডলি লগ -->
+                                <button id="print-log-btn" title="লগ প্রিন্ট করুন"><i class="fas fa-print"></i> প্রিন্ট</button>
+                            </div>
+                        </div>
                         <div class="log-container">
                             <table id="kaza-log-table">
                                 <thead>
                                     <tr>
-                                        <th>তারিখ</th>
-                                        <th>বিবরণ</th>
-                                        <th>ফজর</th>
-                                        <th>যোহর</th>
-                                        <th>আসর</th>
-                                        <th>মাগরিব</th>
-                                        <th>ইশা</th>
-                                        <th>বিতর</th>
+                                        <th>তারিখ</th><th>বিবরণ</th><th>ট্যাগ</th>
+                                        <th>ফজর</th><th>যোহর</th><th>আসর</th><th>মাগরিব</th><th>ইশা</th><th>বিতর</th>
+                                        <th>ফজর সু.</th><th>যোহর সু.</th><th>আসর সু.</th><th>মাগরিব সু.</th><th>ইশা সু.</th>
+                                        <th>কার্যক্রম</th> 
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -98,35 +219,94 @@
                         </div>
                     </div>
 
-                    <!-- প্রাথমিক হিসাব সেটআপ (দুটি পদ্ধতিতে) -->
-                    <div class="card">
+                    <div class="card" id="report-card">
+                        <h2><i class="fas fa-file-alt"></i> রিপোর্ট দেখুন</h2>
+                        <div class="report-controls">
+                            <div class="form-group"><label for="report-type">রিপোর্টের ধরণ</label><select id="report-type"><option value="monthly">মাসিক</option><option value="yearly">বাৎসরিক</option></select></div>
+                            <div class="form-group"><label for="report-period">সময়কাল</label><input type="month" id="report-period"></div>
+                            <button id="generate-report-btn" class="btn-primary" style="margin-top:0;">রিপোর্ট দেখুন</button>
+                        </div>
+                        <div id="report-display" style="display:none;"></div>
+                    </div>
+                    
+                    <!-- ফিচার ২৬, ২৮: সালাত শিক্ষা মডিউল -->
+                    <div class="card" id="salat-education-card">
+                        <h2><i class="fas fa-mosque"></i> সালাত শিক্ষা মডিউল</h2>
+                        <div class="accordion-library">
+                            <div class="accordion-item">
+                                <div class="accordion-question">নামাজের ফরয, ওয়াজিব ও সুন্নাত চেকলিস্ট</div>
+                                <div class="accordion-answer">
+                                    <h4>নামাজের বাইরের ফরয (৭টি):</h4> <p>শরীর পাক, কাপড় পাক, জায়গা পাক, সতর ঢাকা, কিবলামুখী হওয়া, ওয়াক্ত চেনা, নিয়ত করা।</p>
+                                    <h4>নামাজের ভেতরের ফরয (৬টি):</h4> <p>তাকবীরে তাহরিমা, দাঁড়িয়ে নামাজ পড়া, কিরাত পড়া, রুকু করা, দুই সিজদা করা, শেষ বৈঠক।</p>
+                                    <h4>নামাজের ওয়াজিব (১৪টি):</h4> <p>সূরা ফাতিহা পড়া, ফাতিহার সাথে সূরা মিলানো, রুকু-সিজদায় দেরি করা, রুকু থেকে সোজা হয়ে দাঁড়ানো, দুই সিজদার মাঝে সোজা হয়ে বসা, প্রথম বৈঠক, আত্তাহিয়্যাতু পড়া, সালাম ফেরানো, বিতর নামাজে দুআ কুনুত পড়া ইত্যাদি।</p>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <div class="accordion-question">সিজদা সাহু কখন দিতে হয়?</div>
+                                <div class="accordion-answer"><p>নামাজের কোনো ওয়াজিব ভুলবশত ছুটে গেলে বা দেরিতে আদায় করলে সিজদা সাহু দিতে হয়। শেষ বৈঠকে আত্তাহিয়্যাতু পড়ার পর ডান দিকে সালাম ফিরিয়ে দুইটি অতিরিক্ত সিজদা করে আবার আত্তাহিয়্যাতু, দরুদ ও দুআ মাসুরা পড়ে সালাম ফিরাতে হয়।</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ফিচার ২৭: দু'আ লাইব্রেরি -->
+                    <div class="card" id="dua-library-card">
+                        <h2><i class="fas fa-book-quran"></i> দু'আ লাইব্রেরি</h2>
+                        <div class="accordion-library">
+                            <div class="accordion-item">
+                                <div class="accordion-question">দু'আ কুনুত (বিতর নামাজের জন্য)</div>
+                                <div class="accordion-answer" style="font-family: 'Tiro Bangla', serif; font-size: 1.2em; text-align: right; direction: rtl;">
+                                    <p>اللَّهُمَّ إِنَّا نَسْتَعِينُكَ وَنَسْتَغْفِرُكَ وَنُؤْمِنُ بِكَ وَنَتَوَكَّلُ عَلَيْكَ وَنُثْنِي عَلَيْكَ الْخَيْرَ وَنَشْكُرُكَ وَلَا نَكْفُرُكَ وَنَخْلَعُ وَنَتْرُكُ مَنْ يَفْجُرُكَ। اللَّهُمَّ إِيَّاكَ نَعْبُدُ وَلَكَ نُصَلِّي وَنَسْجُدُ وَإِلَيْكَ نَسْعَى وَنَحْفِدُ وَنَرْجُو رَحْمَتَكَ وَنَخْشَى عَذَابَكَ إِنَّ عَذَابَكَ بِالْكُفَّارِ مُلْحِقٌ।</p>
+                                </div>
+                            </div>
+                             <div class="accordion-item">
+                                <div class="accordion-question">ঘুম থেকে ওঠার দু'আ</div>
+                                <div class="accordion-answer" style="font-family: 'Tiro Bangla', serif; font-size: 1.2em; text-align: right; direction: rtl;"><p>اَلْحَمْدُ لِلّٰهِ الَّذِيْ أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُوْرُ</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" id="setup-card">
                         <h2>প্রাথমিক হিসাব সেটআপ (শুধুমাত্র প্রথমবার)</h2>
-                        
                         <div class="setup-section">
                             <h4>পদ্ধতি ১: স্বয়ংক্রিয় ক্যালকুলেটর</h4>
                             <div class="calculator">
-                                <label>আপনার জন্ম তারিখ:</label>
-                                <input type="date" id="birthdate">
-                                <label>বালেগ হওয়ার বয়স (৭-১৫):</label>
-                                <input type="number" id="baligh-age" min="7" max="15" placeholder="বছর লিখুন, যেমন: 14">
+                                <div class="form-group"><label>আপনার জন্ম তারিখ:</label><input type="date" id="birthdate"></div>
+                                <div class="form-group"><label>বালেগ হওয়ার বয়স (৭-১৫):</label><input type="number" id="baligh-age" min="7" max="15" placeholder="বছর লিখুন, যেমন: 14"></div>
+                                <div class="form-group"><label>মোট ছাড়ের দিন (মহিলাদের জন্য):</label><input type="number" id="exemption-days" min="0" placeholder="যেমন: বছরে ৮৪ দিন"></div>
                                 <button id="calculate-btn">হিসাব দেখুন</button>
                                 <div id="auto-calc-result" class="prayer-summary-grid" style="display:none; margin-top:15px;"></div>
                             </div>
                         </div>
-
                         <div class="setup-section">
                             <h4>পদ্ধতি ২: ম্যানুয়াল সেটআপ</h4>
                              <p>আপনার কাজা নামাজের হিসাব জানা থাকলে, সরাসরি লিখুন।</p>
-                            <div id="manual-setup-form" class="prayer-input-grid">
-                                <div class="form-group"><label>ফজর</label><input type="number" min="0" placeholder="0" data-prayer="Fajr"></div>
-                                <div class="form-group"><label>যোহর</label><input type="number" min="0" placeholder="0" data-prayer="Dhuhr"></div>
-                                <div class="form-group"><label>আসর</label><input type="number" min="0" placeholder="0" data-prayer="Asr"></div>
-                                <div class="form-group"><label>মাগরিব</label><input type="number" min="0" placeholder="0" data-prayer="Maghrib"></div>
-                                <div class="form-group"><label>ইশা</label><input type="number" min="0" placeholder="0" data-prayer="Isha"></div>
-                                <div class="form-group"><label>বিতর</label><input type="number" min="0" placeholder="0" data-prayer="Witr"></div>
-                            </div>
+                            <div id="manual-setup-form" class="prayer-input-grid"></div>
                             <button id="save-manual-btn">ম্যানুয়াল হিসাব সেভ করুন</button>
                         </div>
+                    </div>
+
+                    <div class="card" id="advanced-features-card">
+                        <h2><i class="fas fa-rocket"></i> অ্যাডভান্সড ফিচার (আসন্ন)</h2>
+                        <div class="feature-grid">
+                            <div class="feature-item disabled"><i class="fas fa-calendar-alt"></i> ক্যালেন্ডার ইন্টিগ্রেশন <small>(স্থগিত)</small></div>
+                            <div class="feature-item disabled"><i class="fas fa-users"></i> ব্যক্তিগত গ্রুপ <small>(স্থগিত)</small></div>
+                            <div class="feature-item disabled"><i class="fas fa-globe"></i> গ্লোবাল স্ট্যাটাস <small>(স্থগিত)</small></div>
+                            <div class="feature-item disabled"><i class="fas fa-poll"></i> প্রশ্ন ও পোল <small>(স্থগিত)</small></div>
+                        </div>
+                    </div>
+
+                    <!-- ফিচার ৪০: ফিডব্যাক সিস্টেম -->
+                    <div class="card" id="feedback-card">
+                        <h2><i class="fas fa-comment-dots"></i> মতামত দিন</h2>
+                        <p>অ্যাপটি আপনার কেমন লাগছে? আপনার মূল্যবান মতামত আমাদের উন্নতি করতে সাহায্য করবে।</p>
+                        <a href="mailto:riyadhossainhuzaifa@gmail.com?subject=Kaza%20Tracker%20App%20Feedback" class="btn-primary" style="text-align:center; display:block;">মতামত জানাতে ক্লিক করুন</a>
+                    </div>
+
+                    <div class="card reminder-card" id="reminder-card-main">
+                        <h2><i class="fas fa-bell"></i> দৈনিক রিমাইন্ডার</h2>
+                        <p>প্রতিদিন কাজা আদায়ের কথা মনে করিয়ে দিতে আমরা আপনাকে একটি নোটিফিকেশন পাঠাতে পারি।</p>
+                        <button id="enable-notifications-btn">রিমাইন্ডার চালু করুন</button>
+                        <p id="notification-status" style="margin-top: 10px; font-weight: 500;"></p>
                     </div>
                 </main>
                 {% endif %}
@@ -134,8 +314,34 @@
         </div>
     </div>
     
-    {% if 'credentials' in session %}
-        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <!-- Reusable Custom Modal -->
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <p id="modal-message"></p>
+            <div class="modal-actions">
+                <button id="modal-ok-btn" class="modal-btn confirm">ঠিক আছে</button>
+                <button id="modal-confirm-btn" class="modal-btn confirm">নিশ্চিত করুন</button>
+                <button id="modal-cancel-btn" class="modal-btn cancel">বাতিল</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Log Modal -->
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 id="edit-modal-title">লগ এডিট করুন</h3>
+            <div id="edit-form-grid" class="prayer-input-grid"></div>
+            <div class="form-group" style="margin-top: 15px;"><label for="edit-tags">ট্যাগ</label><input type="text" id="edit-tags"></div>
+            <div class="form-group" style="margin-top: 15px;"><label for="edit-note">নোট</label><input type="text" id="edit-note"></div>
+            <div class="modal-actions">
+                <button id="save-edit-btn" class="modal-btn confirm">সেভ করুন</button>
+                <button id="cancel-edit-btn" class="modal-btn cancel">বাতিল</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
